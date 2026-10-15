@@ -1,0 +1,40 @@
+KUIMBA'E STYLE v3.13 — APP INSTALABLE (PWA)
+===============================================
+
+ESTE ZIP CONTIENE LA APLICACIÓN COMPLETA Y LOS ÍCONOS.
+No es un APK. Es una PWA instalable usando Chrome/Android.
+
+ARCHIVOS IMPORTANTES EN LA RAÍZ (NO MOVER A SUBCARPETAS):
+- index.html: aplicación v3.13 con Productos, Caja, Clientes y Turnos.
+- manifest.webmanifest: nombre de la app, ícono y modo sin barras.
+- sw.js: permite volver a abrir la aplicación sin conexión tras cargarla online.
+- logo.png y logo-original.jpg: el mismo logo original integrado en la app.
+- icon-192.png, icon-512.png y icon-maskable-512.png: íconos de instalación.
+- icon-64.png, icon-32.png y apple-touch-icon.png: tamaños auxiliares.
+
+CÓMO INSTALARLA EN ANDROID:
+1. Extraer este ZIP. Entrar a tu repositorio de GitHub para Kuimba'e Style.
+2. Subir todos los archivos al nivel principal del repositorio, juntos.
+   No subas el ZIP sin descomprimir ni muevas los íconos a otra carpeta.
+3. En GitHub, entrar a Settings > Pages > Deploy from a branch.
+   Seleccionar main y / (root); guardar. Esperar a que la web esté publicada.
+4. Abrir el enlace HTTPS de GitHub Pages en Chrome Android.
+5. Menú ⋮ de Chrome > Instalar aplicación (o Añadir a pantalla de inicio).
+   La app aparecerá con el logo negro circular K/S de Kuimba'e Style.
+6. Abrir la app instalada; después de la primera carga conectada puede
+   volver a abrirse sin internet gracias a sw.js.
+
+IMPORTANTE SOBRE DATOS Y RESPALDOS:
+- Los datos se guardan en el navegador/dispositivo donde está instalada.
+- Abrir el HTML en Acode y abrir la PWA por HTTPS no comparte automáticamente
+  la misma base de datos. Exportar respaldo en Ajustes y restaurarlo en PWA.
+- En el teléfono del cliente, una instalación nueva normalmente empieza sin
+  tus datos de prueba del otro teléfono.
+- NO limpiar los datos de Chrome ni desinstalar sin respaldo: se pueden perder
+  registros del negocio. Crear respaldos periódicos en Ajustes.
+- Si cambiás la URL/origen del sitio, tendrás que restaurar el respaldo.
+- Las actualizaciones requieren subir los nuevos archivos al mismo repositorio.
+
+Nota: El ícono de la pantalla de inicio usa el logo original integrado en el
+archivo HTML v3.13. Cambiar el logo desde Ajustes NO cambia automáticamente
+el ícono de Android; para eso hay que actualizar los archivos de íconos.
