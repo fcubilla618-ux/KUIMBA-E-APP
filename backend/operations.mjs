@@ -1,3 +1,6 @@
+import {createManagementOperations,handlesManagement} from './management.mjs';
+import {assertSchedule} from './schedule.mjs';
+import {BUSINESS_DEFAULTS} from '../development/settings-model.mjs';
 import {businessTime} from '../development/business-time.mjs';
 import {ROOT,safeId} from '../development/access.mjs';
 import {validateCommand,fingerprint,reject} from './validation.mjs';
@@ -9,7 +12,8 @@ const denied=()=>reject('permission-denied','No tenés permiso para esta operaci
 /** All reads (including authorization and receipts) precede every write.
  * Firestore retries have no side effects outside the transaction.
  */
-export function createOperations(db,{clock=()=>new Date()}={}){
+export function createOperations(db,{clock=()=>new Date(),auth}={}){
+ const manage=createManagementOperations(db,{auth,clock});
  const ref=(kind,id)=>db.doc(`${ROOT}/${kind}/${id}`);
  async function authorize(tx,uid,barberId){
   const user=(await tx.get(db.doc(`users/${uid}`))).data();
@@ -25,6 +29,7 @@ export function createOperations(db,{clock=()=>new Date()}={}){
  }
  return async function execute(uid,raw){
   if(!safeId(uid))denied();
+  if(handlesManagement(raw?.action))return manage(uid,raw);
   const input=validateCommand(raw),hash=fingerprint(input);
   const key=fingerprint({uid,operationId:input.operationId});
   const receipt=ref('_v2Operations',key);
@@ -39,6 +44,7 @@ export function createOperations(db,{clock=()=>new Date()}={}){
    const target=input.barberId||old?.barberId;
    const user=await authorize(tx,uid,target);
    if(old&&user.role!=='admin'&&old.barberId!==user.barberId)denied();
+   if(user.role==='barber'&&user.permissions?.[input.action==='product.sell'?'canSell':'manageAppointments']===false)denied();
    const prior=await tx.get(receipt);
    if(prior.exists){
     if(prior.data().fingerprint!==hash)reject('idempotency-conflict','Esta clave ya se usó con otros datos.',409);
@@ -56,7 +62,7 @@ export function createOperations(db,{clock=()=>new Date()}={}){
     if(!Number.isSafeInteger(amount)||amount>1_000_000_000)reject('invalid-amount','Importe fuera de rango.');
     const id=`product-${key}`;
     const sale={id,type:'producto',barberId:target,productId:input.productId,productName:product.name,client:product.name,service:'Venta de producto',quantity:input.quantity,unitPrice:product.price,amount,payment:input.payment,date:business.date,time:business.time,createdAt:now,createdBy:uid};
-    tx.update(productRef,{stock:product.stock-input.quantity,updatedAt:now,updatedBy:uid});
+    tx.update(productRef,{stock:product.stock-input.quantity,revision:(product.revision??1)+1,updatedAt:now,updatedBy:uid});
     tx.create(ref('v2Sales',id),sale);tx.create(ref('v2Cash',id),sale);
     result={id,barberId:target,amount};
    }else{
@@ -84,6 +90,8 @@ export function createOperations(db,{clock=()=>new Date()}={}){
     const locks=[...days.keys()].sort().map(id=>ref('_v2ScheduleLocks',id));
     const lockSnaps=await tx.getAll(...locks);
     if(editing){
+     const configuration=(await tx.get(ref('v2Settings','public'))).data()?.settings||BUSINESS_DEFAULTS;
+     assertSchedule(configuration,next.date,next.time);
      const occupied=await tx.get(db.collection(`${ROOT}/v2Appointments`).where('barberId','==',next.barberId).where('date','==',next.date));
      const start=minutes(next.time),end=start+next.duration;
      for(const snap of occupied.docs){

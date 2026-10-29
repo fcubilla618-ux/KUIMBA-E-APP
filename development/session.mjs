@@ -14,13 +14,13 @@ export function createSession(source,publish){
       stopRows();const current=++revision;
       publish({status:'loading',data:null});
       let p;try{p=profile(uid,raw);}catch(error){fail(error);return;}
-      const names=[...SCOPED,'v2Products',...(p.role==='admin'?['v2ProductCosts']:[])];
+      const names=[...SCOPED,'v2Products','v2Settings',...(p.role==='admin'?['v2ProductCosts','users']:[])];
       const data={};
       for(const name of names){
         const stop=source.watchRows(p,name,(rows,fromCache=false)=>{
           if(turn!==generation||current!==revision||failed)return;
           if(fromCache){fail({code:'unavailable'});return;}
-          if(rows.some(row=>!safeId(row.id)||(p.role==='barber'&&name!=='v2Products'&&(name==='v2Barbers'?row.id!==p.barberId:row.barberId!==p.barberId)))){fail({code:'invalid-data'});return;}
+          if(rows.some(row=>!safeId(row.id)||(p.role==='barber'&&SCOPED.includes(name)&&(name==='v2Barbers'?row.id!==p.barberId:row.barberId!==p.barberId)))){fail({code:'invalid-data'});return;}
           data[name]=rows;
           if(names.every(key=>Object.hasOwn(data,key))){
             if(p.role==='barber'&&(data.v2Barbers.length!==1||data.v2Barbers[0].uid!==uid||data.v2Barbers[0].active!==true)){fail({code:'invalid-link'});return;}

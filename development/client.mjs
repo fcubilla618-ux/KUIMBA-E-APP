@@ -1,3 +1,4 @@
+import {prepareMigration,simulateMigration} from './migration/phase3-plan.mjs';
 import {initializeApp} from 'firebase/app';
 import {initializeAuth,inMemoryPersistence,connectAuthEmulator,signInWithEmailAndPassword,signOut,onIdTokenChanged} from 'firebase/auth';
 import {getFirestore,connectFirestoreEmulator,doc,onSnapshot,collection,query,where} from 'firebase/firestore';
@@ -18,7 +19,7 @@ const status=document.getElementById('firebase-status');
 let currentUid=null;
 const source={
   watchProfile(uid,ok,fail){let confirmed=false;const timer=setTimeout(()=>fail({code:'unavailable'}),8000);const stop=onSnapshot(doc(db,'users',uid),{includeMetadataChanges:true},snap=>{if(snap.metadata.fromCache){if(confirmed)fail({code:'unavailable'});return;}confirmed=true;clearTimeout(timer);ok(snap.exists()?snap.data():null);},fail);return ()=>{clearTimeout(timer);stop();};},
-  watchRows(p,name,ok,fail){if(name==='v2Barbers'&&p.role==='barber')return onSnapshot(doc(db,ROOT,name,p.barberId),{includeMetadataChanges:true},snap=>{if(!snap.metadata.fromCache)ok(snap.exists()?[{...snap.data(),id:snap.id}]:[]);},fail);const filter=scope(p,name),ref=collection(db,ROOT,name);return onSnapshot(filter?query(ref,where(...filter)):query(ref),{includeMetadataChanges:true},snap=>{if(!snap.metadata.fromCache)ok(snap.docs.map(d=>({...d.data(),id:d.id})));},fail);}
+  watchRows(p,name,ok,fail){if(name==='v2Settings')return onSnapshot(doc(db,ROOT,name,'public'),{includeMetadataChanges:true},snap=>{if(!snap.metadata.fromCache)ok(snap.exists()?[{...snap.data(),id:snap.id}]:[]);},fail);if(name==='v2Barbers'&&p.role==='barber')return onSnapshot(doc(db,ROOT,name,p.barberId),{includeMetadataChanges:true},snap=>{if(!snap.metadata.fromCache)ok(snap.exists()?[{...snap.data(),id:snap.id}]:[]);},fail);const filter=scope(p,name),ref=name==='users'?collection(db,'users'):collection(db,ROOT,name);return onSnapshot(filter?query(ref,where(...filter)):query(ref),{includeMetadataChanges:true},snap=>{if(!snap.metadata.fromCache)ok(snap.docs.map(d=>({...d.data(),id:d.id})));},fail);}
 };
 const session=createSession(source,state=>{
   const ready=!!state.data;
@@ -54,3 +55,12 @@ window.kuimbaeExecute=createOperationClient({
 });
 
 window.kuimbaeUseBusinessTime(businessTime);
+
+window.kuimbaeClientId=async(barberId,key)=>{
+ const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify({barberId,key})));
+ return 'client-'+Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,'0')).join('');
+};
+window.kuimbaePreviewMigration=async(backup,mapping)=>{
+ const plan=await prepareMigration(backup,mapping),simulation=simulateMigration(plan);
+ return {audit:plan.report,simulation:simulation.report,ok:plan.ok&&simulation.ok,firestoreWrites:0};
+};

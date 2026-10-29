@@ -31,7 +31,7 @@ test('transport rejects foreign origins, malformed JSON, oversized bodies and in
  assert.equal((await send(input,{origin:'https://foreign.example'})).status,403);
  assert.equal((await send(input,{'content-type':'text/plain'})).status,415);
  assert.equal((await send('{')).status,400);
- assert.equal((await send('x'.repeat(17000))).status,413);
+ assert.equal((await send('x'.repeat(530000))).status,413);
  const response=await send({...input,price:1});assert.equal(response.status,400);assert.equal((await response.json()).error.code,'invalid-input');
 });
 

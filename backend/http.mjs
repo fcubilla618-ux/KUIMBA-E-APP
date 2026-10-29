@@ -11,7 +11,7 @@ export function createApiHandler({auth,execute}){
    let identity;
    try{if(!token)throw Error();identity=await auth.verifyIdToken(token,true);}catch{reject('unauthenticated','Volvé a iniciar sesión.',401);}
    const chunks=[];let size=0;
-   for await(const chunk of req){size+=chunk.length;if(size>16384)reject('body-too-large','Solicitud demasiado grande.',413);chunks.push(chunk);}
+   for await(const chunk of req){size+=chunk.length;if(size>524288)reject('body-too-large','Solicitud demasiado grande.',413);chunks.push(chunk);}
    let input;try{input=JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{reject('invalid-json','JSON inválido.');}
    const result=await execute(identity.uid,input);respond(200,{result});
   }catch(error){

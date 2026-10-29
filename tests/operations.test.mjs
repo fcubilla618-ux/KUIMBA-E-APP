@@ -91,3 +91,20 @@ test('server records business date around UTC midnight and keeps UTC audit times
  const cash=(await database.doc(`${ROOT}/v2Cash/${result.id}`).get()).data();
  assert.equal(cash.date,'2026-11-02');assert.equal(cash.time,'21:30');assert.equal(cash.createdAt,'2026-11-03T00:30:00.000Z');
 });
+test('phase 3 operations honor shared closures and live permissions, even for a prior receipt',async()=>{
+ const a=fixture.credentials.find(x=>x.email.startsWith('walter@'));
+ await database.doc(`users/${a.uid}`).update({permissions:{manageAppointments:false,canSell:false}});
+ await assert.rejects(call('walter',{...turn('walter','16:00'),date:'2026-11-17'}),e=>e.code==='permission-denied');
+ await assert.rejects(call('walter',{action:'product.sell',barberId:'test-walter',productId:'test-product',quantity:1,payment:'Efectivo'}),e=>e.code==='permission-denied');
+ await database.doc(`users/${a.uid}`).update({permissions:{manageAppointments:true,canSell:true}});
+ const config=database.doc(`${ROOT}/v2Settings/public`),value=(await config.get()).data();
+ await config.update({'settings.closures':[{id:'closure',start:'2026-11-17',end:'2026-11-17',reason:'Ensayo'}]});
+ await assert.rejects(call('admin',{...turn('walter','16:00'),date:'2026-11-17'}),e=>e.code==='shop-closed');
+ await config.set(value);
+});
+test('phase 3 stale catalog editor cannot overwrite stock sold through the server',async()=>{
+ const data={action:'product.save',id:'phase3-stock',revision:0,name:'Ficticio',category:'Otro',price:20,cost:5,stock:3,photo:'',active:true};
+ await call('admin',data);await call('dani',{action:'product.sell',barberId:'test-dani',productId:'phase3-stock',quantity:1,payment:'Efectivo'});
+ await assert.rejects(call('admin',{...data,revision:1,price:30}),e=>e.code==='stale-revision');
+ assert.equal((await database.doc(`${ROOT}/v2Products/phase3-stock`).get()).data().stock,2);
+});

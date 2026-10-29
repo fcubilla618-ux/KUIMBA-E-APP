@@ -1,4 +1,4 @@
-# Kuimba’e Style — Firebase en desarrollo · fase 2
+# Kuimba’e Style — Firebase en desarrollo · fase 3
 
 Trabajo para [issue #1](https://github.com/fcubilla618-ux/KUIMBA-E-APP/issues/1),
 solo en `beta-firebase-roles-cajas`. Servidor transaccional de ensayo sobre las **pantallas de
@@ -62,10 +62,31 @@ no reutilizar un origen con un service worker instalado previamente.
 - Claves idempotentes para reintentos y botón «Reintentar confirmación» cuando se
   pierde la respuesta. No empezar otra intención hasta resolver la pendiente.
 - Fecha contable y filtro «Hoy» usan America/Asuncion; timestamps de auditoría UTC.
-  Catálogo, precios, perfiles, notas, ajustes y restauración aún no admiten escritura
-  remota. Sus funciones originales permanecen en el HTML intacto.
+  Catálogo, precios, notas, perfiles y ajustes ahora se sincronizan por el servidor.
+  La restauración remota y el borrado global permanecen bloqueados; se ofrece
+  auditoría/simulación sin escritura y el original permanece intacto.
+- CRUD de servicios por barbero (permiso explícito para que un barbero edite sus
+  precios), productos/inventario/fotos y costos separados sólo para administrador.
+  Una venta incrementa la revisión del producto y evita restaurar stock por una
+  edición obsoleta de catálogo.
+- Clientes independientes de sus turnos y notas aisladas por propietario, con
+  lectura en vivo. El administrador elige a qué barbero pertenecen sus notas.
+- Ajustes originales compartidos: logo, identidad, horarios, feriados/vacaciones,
+  clasificación VIP/habituales y mensaje de WhatsApp. El servidor usa los mismos
+  días/horarios al reservar (las horas fin representan el último inicio).
+- Panel admin para crear cuentas ficticias, cambiar rol/estado/permisos/vínculo y
+  restablecer contraseñas. No se puede secuestrar un vínculo ni dejar al negocio
+  sin administrador activo. Las contraseñas sólo transitan en memoria hacia Auth.
+- Correcciones auditadas del medio de pago: preservan importe, dueño y venta;
+  no permiten modificar registros con reversión.
+- Respaldo local incluye un suplemento V2 para preservar datos que no caben en
+  listas V1. No es exportación de Auth ni del diario interno de auditoría.
 
-El contrato está en [plan fase 2](docs/integration/FASE_2_PLAN.md) y la validación en
+La fase 3 se documenta en [plan fase 3](docs/integration/FASE_3_PLAN.md),
+[resultados y funciones pendientes](docs/integration/FASE_3_RESULTADOS.md) y
+[migración offline](docs/integration/FASE_3_MIGRACION.md).
+
+El contrato previo está en [plan fase 2](docs/integration/FASE_2_PLAN.md) y la validación en
 [resultados fase 2](docs/integration/FASE_2_RESULTADOS.md). El servidor usa Firebase
 Admin SDK exclusivamente con los emuladores. No usarlo como servidor productivo.
 
@@ -81,21 +102,25 @@ limpieza de sesión y vínculo recíproco. No se copiaron credenciales, IDs real
 reglas inseguras de escritura ni el sincronizador V1 de arrays compartidos.
 
 ```sh
-node development/audit-cli.mjs /ruta/privada/respaldo.json /ruta/privada/vinculos.json
+node development/migration/phase3-cli.mjs /ruta/privada/respaldo.json /ruta/privada/mapeo.json
 ```
 
-`vinculos.json` es un mapa UID → barberId, verificado manualmente fuera del repo.
+`mapeo.json` contiene barberLinks (barberId → UID), serviceAssignments,
+productSaleOwners y clientOwners, revisados fuera del repositorio. Ver el contrato
+completo en FASE_3_MIGRACION.md. No se adivina propietario de datos compartidos.
 La auditoría no conecta a Firebase ni escribe archivos; solo imprime conteos,
 total de caja y errores sin nombres/teléfonos. Detecta duplicados, referencias
 rotas, stock/precios inválidos y choques de agenda. Mantiene precios históricos.
-`ready` solo indica que pasan las validaciones offline; siempre exige verificar
+`ok` sólo indica que pasan las validaciones offline; siempre exige verificar
 los perfiles reales antes de migrar. No existe importación automática.
 
 Sin respaldo real no se puede afirmar si los ceros de la beta proceden de un V1
 vacío, no importado o de otros errores. No convertir errores de permisos en listas
 vacías. Walter, Dani y Junior necesitan verificación real de sus vínculos antes
-de cualquier migración. También queda pendiente mapear servicios compartidos,
-ventas históricas sin dueño, notas de clientes y ajustes al esquema V2.
+de cualquier migración. El planificador exige asignaciones explícitas para servicios compartidos, ventas
+sin dueño y notas; conserva precios históricos, fotos, ajustes y costos privados.
+Las ambigüedades bloquean toda simulación, sin sobrescribir el origen.
+La carga real y reimportación de respaldos V2 permanecen pendientes.
 
 Ver [plan, límites y riesgos](docs/integration/PLAN.md). Las reglas son exclusivas
 del emulador; no sustituyen las reglas reales. Esta entrega no está lista para

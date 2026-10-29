@@ -15,7 +15,7 @@ window.kuimbaeView={
     for(const id of ['barbersGrid','appointmentsList','cashPickerGrid','cashEntriesList','clientsList','productsGrid','productSalesList','servicesList','agendaHead','clientDetailContent','clientDetailHead','clientReminder','clientHistoryList','clientVisitCount','clientLastVisit','clientFavoriteService'])document.getElementById(id)?.replaceChildren();
   },
   apply(p,data){
-    barbers=data.v2Barbers.map(x=>({...x,photo:/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(x.photo||'')?x.photo:''}));appointments=data.v2Appointments.map(x=>({...x,servicePrice:x.price}));services=data.v2Services;
+    barbers=data.v2Barbers.map(x=>({...x,photo:/^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(x.photo||'')?x.photo:''}));appointments=data.v2Appointments.map(x=>({...x,servicePrice:x.price}));services=data.v2Services;
     cashEntries=data.v2Cash; // Sales are already represented here exactly once.
     const costs=new Map((data.v2ProductCosts||[]).map(x=>[x.id,x.cost]));
     products=data.v2Products.map(x=>({...x,...(p.role==='admin'?{cost:costs.get(x.id)}:{})}));
@@ -59,4 +59,4 @@ function enforceReadOnly(){
   }else document.getElementById('productsCostValue')?.parentElement.removeAttribute('hidden');
 }
 for(const name of ['saveSettingsFromUI','saveClientNotes','setAppointmentStatus','setCashPayment','saveProductFromForm','saveProductSale','confirmDeleteProduct','deleteService','executeKuimbaeReset','applyRestoreBackup','restoreFullBackup','addClosurePeriod','removeClosurePeriod','registerCashForAppointment','removeCashForAppointment'])window[name]=()=>showToast('Escrituras bloqueadas hasta disponer de validación del servidor');
-new MutationObserver(enforceReadOnly).observe(document.querySelector('body > .app'),{childList:true,subtree:true});
+new MutationObserver(()=>enforceReadOnly()).observe(document.querySelector('body > .app'),{childList:true,subtree:true});

@@ -42,3 +42,12 @@ test('audit rejects invalid raw durations before preview defaults and malformed 
  for(const invalid of [0,undefined,'bad',-1]){b.data.appointments[0].duration=invalid;assert.equal(audit(b,{account:'walter'}).ready,false);}
  b.data.cashEntries=[null];assert.equal(audit(b,null).ready,false);
 });
+test('phase 3 session includes isolated client notes, shared settings and admin-only user roster',()=>{
+ const p=profile('test',{role:'barber',active:true,barberId:'walter',permissions:{manageServices:true,canSell:false}});
+ assert.equal(p.permissions.manageServices,true);assert.equal(p.permissions.canSell,false);
+ assert.deepEqual(scope(p,'v2Clients'),['barberId','==','walter']);
+ assert.equal(scope(p,'v2Settings'),null);
+ assert.throws(()=>scope(p,'users'));
+ const subscriptions=[];const session=createSession({watchProfile(uid,ok){ok({role:'admin',active:true});return ()=>{};},watchRows(p,name,ok){subscriptions.push(name);return ()=>{};}},()=>{});
+ session.login('test');assert.ok(subscriptions.includes('users'));assert.ok(subscriptions.includes('v2Settings'));assert.ok(subscriptions.includes('v2Clients'));
+});

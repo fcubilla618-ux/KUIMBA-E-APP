@@ -6,9 +6,9 @@ import './build.mjs';
 import {auth,database} from '../backend/runtime.mjs';
 import {createOperations} from '../backend/operations.mjs';
 import {createApiHandler} from '../backend/http.mjs';
-const api=createApiHandler({auth,execute:createOperations(database)});
+const api=createApiHandler({auth,execute:createOperations(database,{auth})});
 const root=fileURLToPath(new URL('../',import.meta.url));
-const bridge=await readFile(join(root,'development/bridge.js'),'utf8')+'\n'+await readFile(join(root,'development/operations-bridge.js'),'utf8');
+const bridge=await readFile(join(root,'development/bridge.js'),'utf8')+'\n'+await readFile(join(root,'development/operations-bridge.js'),'utf8')+'\n'+await readFile(join(root,'development/management-bridge.js'),'utf8');
 const source=await readFile(join(root,'index.html'),'utf8');
 // Transform only the served development copy. Fail if the original shape changes.
 const transforms=[
@@ -20,7 +20,7 @@ const transforms=[
 ];
 let html=source;
 for(const [before,after] of transforms){if(!html.includes(before))throw Error('Cambió la aplicación original: revisar adaptador '+before);html=html.replace(before,after);}
-html=html.replace('</head>','<style>html:not(.firebase-ready) body>.app{display:none}#firebase-session .firebase-panel{width:min(100%,760px);margin:auto;padding:12px 16px}#operation-message{width:min(100%,760px);margin:0 auto;padding:0 16px 12px}#firebase-session input{max-width:100%;padding:10px;margin:6px 0}#firebase-session label{display:block}body{overflow-wrap:anywhere}</style></head>');
+html=html.replace('</head>','<style>html:not(.firebase-ready) body>.app{display:none}#firebase-session .firebase-panel{width:min(100%,760px);margin:auto;padding:12px 16px}#operation-message{width:min(100%,760px);margin:0 auto;padding:0 16px 12px}#firebase-session input{max-width:100%;padding:10px;margin:6px 0}#firebase-session label{display:block}body{overflow-wrap:anywhere}#userManager label{display:block}#userRows{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}#migrationMapping{width:100%}</style></head>');
 html=html.replace('</body>',`<script>${bridge}</script><script type="module" src="/development/generated/client.js"></script></body>`);
 const assets=new Set(['manifest.webmanifest','logo.png','logo-original.jpg','icon-32.png','icon-64.png','icon-192.png','icon-512.png','icon-maskable-512.png','apple-touch-icon.png','development/generated/client.js']);
 createServer(async(req,res)=>{

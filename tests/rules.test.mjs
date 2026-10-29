@@ -56,3 +56,15 @@ test('unauthenticated, inactive, missing active, missing profile and wrong recip
   await assertFails(getDocs(collection(db,ROOT,'v2Products')));
  }
 });
+test('phase 3 notes and settings reads preserve owner isolation; all metadata writes still denied',async()=>{
+ await env.withSecurityRulesDisabled(async c=>{for(const a of accounts.filter(x=>x.barberId))await setDoc(doc(c.firestore(),ROOT,'v2Clients',a.uid),{id:a.uid,barberId:a.barberId,key:'cliente',name:'Ficticio',notes:`Nota ${a.uid}`});});
+ for(const a of accounts.filter(x=>x.barberId)){
+  const db=env.authenticatedContext(a.uid).firestore();
+  const own=await assertSucceeds(getDocs(query(collection(db,ROOT,'v2Clients'),where('barberId','==',a.barberId))));assert.equal(own.size,1);
+  for(const other of accounts.filter(x=>x.barberId&&x.uid!==a.uid))await assertFails(getDoc(doc(db,ROOT,'v2Clients',other.uid)));
+  await assertFails(getDocs(collection(db,ROOT,'v2Clients')));
+  await assertSucceeds(getDoc(doc(db,ROOT,'v2Settings','public')));
+  await assertFails(getDoc(doc(db,ROOT,'v2Settings','private')));
+  for(const kind of ['v2Clients','v2Settings','v2ProductCosts'])await assertFails(setDoc(doc(db,ROOT,kind,'forged'),{barberId:a.barberId}));
+ }
+});
