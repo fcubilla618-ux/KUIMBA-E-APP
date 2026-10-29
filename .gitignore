@@ -1,0 +1,10 @@
+node_modules
+development/generated/
+*-debug.log
+*-debug.*.log
+test-results/
+playwright-report/
+artifacts/
+.env*
+*backup*.json
+*respaldo*.json
