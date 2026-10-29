@@ -1,0 +1,30 @@
+// Emulator-only, read-only prototype. NEVER deploy over production rules.
+// users: role, active=true, barberId. v2Barbers: id, uid, active=true.
+// v2Products contains public catalog fields only. Costs live in v2ProductCosts.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function authenticated() { return request.auth != null; }
+    function p() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function active() { return authenticated() && p().active == true; }
+    function admin() { return active() && p().role == 'admin'; }
+    function barber() {
+      return active() && p().role == 'barber' && p().barberId is string
+        && p().barberId.matches('^[a-zA-Z0-9_-]{1,128}$')
+        && get(/databases/$(database)/documents/shops/kuimbae-style/v2Barbers/$(p().barberId)).data.uid == request.auth.uid
+        && get(/databases/$(database)/documents/shops/kuimbae-style/v2Barbers/$(p().barberId)).data.active == true;
+    }
+    function owner(data) { return barber() && data.barberId == p().barberId; }
+    match /users/{uid} { allow get: if authenticated() && request.auth.uid == uid || admin(); allow list: if admin(); }
+    match /shops/kuimbae-style/datasets/{id} { allow read: if admin(); }
+    match /shops/kuimbae-style/v2Barbers/{id} { allow read: if admin() || (barber() && resource.data.id == p().barberId && resource.data.uid == request.auth.uid); }
+    match /shops/kuimbae-style/{kind}/{id} {
+      allow read: if kind in ['v2Appointments','v2Services','v2Sales','v2Cash'] && (admin() || owner(resource.data));
+      allow read: if kind == 'v2Products' && (admin() || barber());
+      allow read: if kind == 'v2ProductCosts' && admin();
+    }
+    // Includes profiles, appointments, services, inventory and all accounting.
+    // No browser may create, update or delete until server validation exists.
+    match /{path=**} { allow write: if false; }
+  }
+}

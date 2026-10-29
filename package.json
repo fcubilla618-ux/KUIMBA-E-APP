@@ -1,0 +1,22 @@
+{
+  "name": "kuimbae-original-development",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test --test-isolation=none tests/unit.test.mjs",
+    "dev": "node development/server.mjs",
+    "test:rules": "firebase emulators:exec --project demo-kuimbae-original --config firebase.development.json --only auth,firestore 'node --test --test-isolation=none tests/rules.test.mjs'",
+    "test:browser": "playwright test",
+    "build:dev": "node development/build.mjs",
+    "emulators:dev": "firebase emulators:start --project demo-kuimbae-original --config firebase.development.json --only auth,firestore",
+    "seed:demo": "node development/demo.mjs",
+    "test:all": "firebase emulators:exec --project demo-kuimbae-original --config firebase.development.json --only auth,firestore \"npm test && node --test --test-isolation=none tests/rules.test.mjs && npm run test:browser\""
+  },
+  "devDependencies": {
+    "firebase": "13.1.0",
+    "firebase-tools": "15.34.1",
+    "@firebase/rules-unit-testing": "6.0.0",
+    "@playwright/test": "1.64.1",
+    "esbuild": "0.28.2"
+  }
+}

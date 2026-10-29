@@ -1,0 +1,2 @@
+import {defineConfig,devices} from '@playwright/test';
+export default defineConfig({testDir:'tests',testMatch:'browser.spec.mjs',workers:1,timeout:45000,webServer:{command:'npm run dev',url:'http://127.0.0.1:4173',reuseExistingServer:true},use:{baseURL:'http://127.0.0.1:4173',serviceWorkers:'block'},projects:[{name:'Android',use:{...devices['Pixel 7']}},{name:'Tablet',use:{...devices['iPad (gen 7)'],defaultBrowserType:'chromium'}}]});
