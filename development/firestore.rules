@@ -1,4 +1,4 @@
-// Emulator-only, read-only prototype. NEVER deploy over production rules.
+// Emulator-only client rules; writes run through the authorized server. NEVER deploy over production rules.
 // users: role, active=true, barberId. v2Barbers: id, uid, active=true.
 // v2Products contains public catalog fields only. Costs live in v2ProductCosts.
 rules_version = '2';
@@ -24,7 +24,8 @@ service cloud.firestore {
       allow read: if kind == 'v2ProductCosts' && admin();
     }
     // Includes profiles, appointments, services, inventory and all accounting.
-    // No browser may create, update or delete until server validation exists.
+    // No browser may create, update or delete. Admin SDK writes are authorized
+    // and validated inside backend/operations.mjs transactions.
     match /{path=**} { allow write: if false; }
   }
 }

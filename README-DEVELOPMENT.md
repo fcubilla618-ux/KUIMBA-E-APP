@@ -1,7 +1,7 @@
-# Kuimba’e Style — primera integración Firebase en desarrollo
+# Kuimba’e Style — Firebase en desarrollo · fase 2
 
 Trabajo para [issue #1](https://github.com/fcubilla618-ux/KUIMBA-E-APP/issues/1),
-solo en `beta-firebase-roles-cajas`. Prototipo de lectura sobre las **pantallas de
+solo en `beta-firebase-roles-cajas`. Servidor transaccional de ensayo sobre las **pantallas de
 la PWA original 3.13**. Los archivos originales no se modifican. Abrir index.html
 normalmente conserva la aplicación local original; Firebase solo se conecta al
 servir la copia transformada en memoria mediante `npm run dev`.
@@ -26,7 +26,7 @@ El navegador usa http://127.0.0.1:4173. Pruebas y seed generan cuentas ficticias
 contraseñas aleatorias solo en memoria. No hay credenciales reales. El seed es un
 helper exclusivo de pruebas; borra **solo** la base del emulador del proyecto demo.
 No ejecutar simultáneamente varias instancias de emuladores. Las pruebas de navegador
-requieren el servidor local iniciado y reinician los fixtures entre proyectos.
+inician el servidor local automáticamente si no está activo y reinician los fixtures entre proyectos.
 No hay configuración ni comandos de hosting/deploy en este trabajo.
 
 Para explorar manualmente las pantallas, mantener `npm run dev` y ejecutar en
@@ -50,10 +50,24 @@ no reutilizar un origen con un service worker instalado previamente.
   sumar ventas dos veces ni fabricar movimientos desde turnos atendidos.
 - Al salir, perder permisos o quedar sin conexión se ocultan y limpian registros.
 - Estados distintos para carga, datos vacíos y permisos/conexión fallida.
-- **Todas las escrituras de clientes bloqueadas**, incluso admin, por reglas.
-  Las operaciones futuras deben pasar por servidor: reservar con exclusión de
-  franjas y vender mediante transacción atómica con stock/precio/identidad y clave
-  idempotente. Las pruebas actuales prueban el bloqueo; no un servidor inexistente.
+- **Escrituras directas de clientes bloqueadas**, incluso admin, por reglas.
+  Los formularios de turnos y venta llaman al servidor autenticado de ensayo.
+- Crear/modificar/cancelar turnos con exclusión transaccional por barbero/día y
+  revisión para no pisar cambios de otro dispositivo. Admin puede reasignar a un
+  barbero activo con un servicio autorizado para ese barbero.
+- Atender registra una venta y caja individual con precio histórico del turno.
+  Cancelar un turno cobrado agrega una reversión, sin borrar los registros.
+- Venta de producto: precio vigente del servidor, descuento de stock y venta/caja
+  individuales en una sola transacción. La caja general suma esos mismos registros.
+- Claves idempotentes para reintentos y botón «Reintentar confirmación» cuando se
+  pierde la respuesta. No empezar otra intención hasta resolver la pendiente.
+- Fecha contable y filtro «Hoy» usan America/Asuncion; timestamps de auditoría UTC.
+  Catálogo, precios, perfiles, notas, ajustes y restauración aún no admiten escritura
+  remota. Sus funciones originales permanecen en el HTML intacto.
+
+El contrato está en [plan fase 2](docs/integration/FASE_2_PLAN.md) y la validación en
+[resultados fase 2](docs/integration/FASE_2_RESULTADOS.md). El servidor usa Firebase
+Admin SDK exclusivamente con los emuladores. No usarlo como servidor productivo.
 
 ## Recuperación y auditoría
 

@@ -49,7 +49,7 @@ renderState=function(state){
   enforceReadOnly();
 };
 function enforceReadOnly(){
-  const mutator=/^(openBarberModal|openServiceModal|editService|deleteService|openProductForm|openProductSale|openProductDelete|confirmDeleteProduct|setAppointmentStatus|saveClientNotes|saveSettingsFromUI|resetKuimbaeSystem|applyRestoreBackup|restoreOriginalSettingsLogo|removeClosurePeriod|selectSlot|document.getElementById\('restoreBackupInput')/;
+  const mutator=/^(openBarberModal|openServiceModal|editService|deleteService|openProductForm|openProductDelete|confirmDeleteProduct|saveClientNotes|saveSettingsFromUI|resetKuimbaeSystem|applyRestoreBackup|restoreOriginalSettingsLogo|removeClosurePeriod|document.getElementById\('restoreBackupInput')/;
   for(const e of document.querySelectorAll('[onclick],.add-card,.cash-payment')){
     if((mutator.test(e.getAttribute('onclick')||'')||e.matches('.add-card,.cash-payment'))&&!e.disabled)e.disabled=true;
   }

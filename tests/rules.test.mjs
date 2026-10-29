@@ -32,6 +32,7 @@ for(const a of accounts.filter(a=>a.barberId))test(`${a.uid}: direct API isolati
  await assertFails(getDoc(doc(db,ROOT,'v2ProductCosts','test-product')));
  await assertFails(getDoc(doc(db,ROOT,'datasets','appointments')));
  await assertFails(getDocs(collection(db,'users')));
+ for(const kind of ['_v2Operations','_v2ScheduleLocks'])await assertFails(getDocs(collection(db,ROOT,kind)));
  await assertFails(updateDoc(doc(db,'users',a.uid),{role:'admin',barberId:'test-dani'}));
 });
 test('admin reads all accounting; every client write blocked including overlaps, negative stock and replay',async()=>{
